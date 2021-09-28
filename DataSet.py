@@ -57,11 +57,12 @@ def addSymmetricNoise(labels, noiseRate):
 
 
 class Cifar10_train(Dataset):
-    def __init__(self):
+    def __init__(self, addNoise):
         self.x, self.y = fechDataFromFile()
         self.metadata = readMetaData()
         # 40%标签随机翻转
-        #self.y = addSymmetricNoise(self.y, 0.4)
+        if addNoise:
+            self.y = addSymmetricNoise(self.y, 0.4)
 
     def __len__(self):
         return len(self.x)
@@ -82,7 +83,7 @@ class Cifar10_test(Dataset):
             [0, 3, 1, 2]
         )
         self.y = torch.as_tensor(dataDict[b'labels'], dtype=torch.long)
-        #showImage(self.x[15])
+        # showImage(self.x[15])
 
     def __len__(self):
         return len(self.x)

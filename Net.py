@@ -22,9 +22,9 @@ class MyCnn(nn.Module):
             nn.Conv2d(64, 64, (3, 3)),
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear((4 * 4) * 64, 8 * 64),
+            nn.Linear((4 * 4) * 64, 4 * 64),
             nn.ReLU(),
-            nn.Linear(8 * 64, 10),
+            nn.Linear(4 * 64, 10),
             nn.Softmax(dim=1)
         )
 

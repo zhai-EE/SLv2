@@ -42,5 +42,10 @@ def eval(model):
             infos[i].TN = datasetLen - infos[i].FP - infos[i].FN - infos[i].TP
             infos[i].accuracy = (infos[i].TN + infos[i].TP) / (infos[i].TN + infos[i].TP + infos[i].FP + infos[i].FN)
 
-
     return infos
+
+
+
+
+
+
