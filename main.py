@@ -6,6 +6,7 @@ import torch
 from Eval import eval
 import matplotlib.pyplot as plt
 from MyLoss import SL
+from MyResNet import resnet50
 LossClass = SL
 addNoise = True
 runName = f"{LossClass()._get_name()}  isNoisy_{addNoise}"
