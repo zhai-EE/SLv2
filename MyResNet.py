@@ -151,8 +151,8 @@ class ResNet(nn.Module):
                              "or a 3-element tuple, got {}".format(replace_stride_with_dilation))
         self.groups = groups
         self.base_width = width_per_group
-        self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3,
-                               bias=False)
+        self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=3, stride=2, padding=1,
+                               bias=False)  # 这里改动过，原本核大小为7，padding为3
         self.bn1 = norm_layer(self.inplanes)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
@@ -236,3 +236,18 @@ def resnet50() -> ResNet:
         progress (bool): If True, displays a progress bar of the download to stderr
     """
     return ResNet(Bottleneck, [3, 4, 6, 3])
+
+
+class resnetDs(nn.Module):
+    def __init__(self):
+        super(resnetDs, self).__init__()
+        self.mainNet = resnet50()
+        self.l2 = nn.Sequential(nn.Flatten(), nn.Linear(8 * 8 * 256, 10))
+        self.l3 = nn.Sequential(nn.Flatten(), nn.Linear(4 * 4 * 512, 10))
+        self.l4 = nn.Sequential(nn.Flatten(), nn.Linear(2 * 2 * 1024, 10))
+        self.l5 = nn.Sequential(nn.Flatten(), nn.Linear(1 * 1 * 2048, 10))
+
+
+    def forward(self, x):
+        f2, f3, f4, f5, fFinal = self.mainNet(x)
+        return self.l2(f2), self.l3(f3), self.l4(f4), self.l5(f5), fFinal

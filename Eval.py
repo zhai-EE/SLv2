@@ -30,7 +30,7 @@ def eval(model):
             x = x.to(device)
             y = y.to(device)
             #
-            pred = model(x)
+            pred = model(x)[-1]
             pred = pred.argmax(dim=1).to(torch.long)
             for j in range(len(pred)):
                 if pred[j] == y[j]:

@@ -6,9 +6,12 @@ import torch
 from Eval import eval
 import matplotlib.pyplot as plt
 from MyLoss import SL
-from MyResNet import resnet50
-LossClass = SL
-addNoise = True
+from MyResNet import resnetDs
+from torchvision.transforms.functional import resize
+from torchvision.transforms.functional import InterpolationMode
+
+LossClass = nn.CrossEntropyLoss
+addNoise = False
 runName = f"{LossClass()._get_name()}  isNoisy_{addNoise}"
 
 
@@ -47,7 +50,7 @@ if __name__ == '__main__':
     if (False):
         showRes(runName)
     else:
-        batchsize = 256
+        batchsize = 64
         lr = 0.01
         numEpoch = 120
         accuracy = torch.zeros(numEpoch, 10, dtype=torch.float32)
@@ -56,17 +59,19 @@ if __name__ == '__main__':
         #
         dataset = Cifar10_train(addNoise)
         dataloader = DataLoader(dataset, batchsize, shuffle=True, num_workers=2)
-        model = MyCnn().to(device, dtype=torch.float32)
+        model = resnetDs().to(device, dtype=torch.float32)
+        #
         optimizer = optim.SGD(model.parameters(), weight_decay=1e-4, lr=lr, momentum=0.9)
         scheduler = optim.lr_scheduler.StepLR(optimizer, 40, gamma=0.1)
         criterion = LossClass()
         for epoch in range(numEpoch):
             for i, (x, y) in enumerate(dataloader):
                 x = x.to(device)
+                # x = resize(x, [64, 64], interpolation=InterpolationMode.BILINEAR, antialias=True)
                 y = y.to(device)
                 #
-                pred = model(x)
-                loss = criterion(pred, y)
+                pred2, pred3, pred4, pred5, predFinal = model(x)
+                loss = criterion(pred2, y) + criterion(pred3, y) + criterion(pred4, y) + criterion(pred5, y) + criterion(predFinal, y)
                 #
                 optimizer.zero_grad()
                 loss.backward()
@@ -81,5 +86,4 @@ if __name__ == '__main__':
                     print(f"epoch:{epoch}\tclass{j}\taccuracy:{infos[j].accuracy}")
         torch.save(model, runName + ".pt")
         torch.save(accuracy, runName + "_result.pt")
-        plotAcc(accuracy,save=True)
-
+        plotAcc(accuracy, save=True)
