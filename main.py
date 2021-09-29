@@ -5,9 +5,9 @@ from torch import nn, optim
 import torch
 from Eval import eval
 import matplotlib.pyplot as plt
-
-LossClass = nn.CrossEntropyLoss
-addNoise = False
+from MyLoss import SL
+LossClass = SL
+addNoise = True
 runName = f"{LossClass()._get_name()}  isNoisy_{addNoise}"
 
 
@@ -16,7 +16,7 @@ def showRes(name):
     plotAcc(acc)
 
 
-def plotAcc(acc):
+def plotAcc(acc, save=False):
     fig, ax = plt.subplots()
     numEpoch = acc.shape[0]
     xtick = torch.linspace(0, numEpoch - 1, numEpoch)
@@ -36,6 +36,8 @@ def plotAcc(acc):
     ax.legend()
     ax.grid()
     plt.ylim((0.5, 1))
+    if save:
+        plt.savefig(runName + ".png")
     plt.show()
 
 
@@ -78,5 +80,5 @@ if __name__ == '__main__':
                     print(f"epoch:{epoch}\tclass{j}\taccuracy:{infos[j].accuracy}")
         torch.save(model, runName + ".pt")
         torch.save(accuracy, runName + "_result.pt")
-        plotAcc(accuracy)
-        plt.savefig(runName + ".png")
+        plotAcc(accuracy,save=True)
+
