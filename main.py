@@ -100,11 +100,11 @@ def train_ds():
 
 if __name__ == '__main__':
     #
-    if (False):
-        LossClass = nn.CrossEntropyLoss
+    if (True):
+        LossClass = LSRLoss
         addNoise = True
         runName = f"{LossClass()._get_name()}  isNoisy_{addNoise}"
-        showResDs("CE - noisy", save=True)
+        showResDs("LSR - noisy", save=True)
     else:
         #
         # addNoise = False
