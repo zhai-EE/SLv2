@@ -3,16 +3,16 @@ from torch.utils.data import DataLoader
 from Net import MyCnn
 from torch import nn, optim
 import torch
-from Eval import eval
+from Eval import eval, eval_ds
 import matplotlib.pyplot as plt
-from MyLoss import SL
+from MyLoss import SL, LSRLoss
 from MyResNet import resnetDs
 from torchvision.transforms.functional import resize
 from torchvision.transforms.functional import InterpolationMode
 
-LossClass = nn.CrossEntropyLoss
-addNoise = False
-runName = f"{LossClass()._get_name()}  isNoisy_{addNoise}"
+LossClass = None
+addNoise = None
+runName = None
 
 
 def showRes(name):
@@ -20,7 +20,12 @@ def showRes(name):
     plotAcc(acc)
 
 
-def plotAcc(acc, save=False):
+def showResDs(name, save=False):
+    acc = torch.load(runName + "_result.pt")
+    plotAccDs(acc, name=name, save=save)
+
+
+def plotAcc(acc, save=False, name=runName):
     fig, ax = plt.subplots()
     numEpoch = acc.shape[0]
     xtick = torch.linspace(0, numEpoch - 1, numEpoch)
@@ -36,54 +41,78 @@ def plotAcc(acc, save=False):
     ax.fill_between(xtick[::gap], min[::gap], max[::gap], color=(230 / 256, 230 / 256, 250 / 256))
     ax.set_xlabel("epoch")
     ax.set_ylabel("class wise accuracy")
-    ax.set_title(runName)
-    ax.legend()
+    ax.set_title(name)
+    ax.legend(ncol=2, loc='lower right')
     ax.grid()
     plt.ylim((0.5, 1))
     if save:
-        plt.savefig(runName + ".png")
+        plt.savefig(name + ".png")
     plt.show()
+
+
+def plotAccDs(acc, save=False, name=runName):
+    layerName = ['conv2_x', 'conv3_x', 'conv4_x', 'conv5_x', 'final']
+    for i in range(5):
+        plotAcc(acc[:, i, :], save=save, name=f"{name} at {layerName[i]}")
+
+
+def train_ds():
+    batchsize = 64
+    lr = 0.01
+    numEpoch = 120
+    accuracy = torch.zeros(numEpoch, 5, 10, dtype=torch.float32)
+    #
+    device = torch.device('cuda')
+    #
+    dataset = Cifar10_train(addNoise)
+    dataloader = DataLoader(dataset, batchsize, shuffle=True, num_workers=2)
+    model = resnetDs().to(device, dtype=torch.float32)
+    #
+    optimizer = optim.SGD(model.parameters(), weight_decay=1e-4, lr=lr, momentum=0.9)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, 40, gamma=0.1)
+    criterion = LossClass()
+    for epoch in range(numEpoch):
+        for i, (x, y) in enumerate(dataloader):
+            x = x.to(device)
+            y = y.to(device)
+            #
+            pred2, pred3, pred4, pred5, predFinal = model(x)
+            loss = criterion(pred2, y) + criterion(pred3, y) + criterion(pred4, y) + criterion(pred5, y) + criterion(
+                predFinal, y)
+            #
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            if i % 100 == 0:
+                print(f"epoch:{epoch}\t batch:{i} \tloss:{loss}")
+        scheduler.step()
+        infos = eval_ds(model)
+        #
+        for j in range(10):
+            for k in range(5):
+                accuracy[epoch, k, j] = infos[k][j].accuracy
+                if epoch % 5 == 0:
+                    print(f"epoch:{epoch}\tlayer:{k}\tclass:{j}\taccuracy:{infos[k][j].accuracy}")
+    torch.save(model, runName + ".pt")
+    torch.save(accuracy, runName + "_result.pt")
+    plotAccDs(accuracy, save=True)
 
 
 if __name__ == '__main__':
     #
     if (False):
-        showRes(runName)
+        LossClass = nn.CrossEntropyLoss
+        addNoise = True
+        runName = f"{LossClass()._get_name()}  isNoisy_{addNoise}"
+        showResDs("CE - noisy", save=True)
     else:
-        batchsize = 64
-        lr = 0.01
-        numEpoch = 120
-        accuracy = torch.zeros(numEpoch, 10, dtype=torch.float32)
         #
-        device = torch.device('cuda')
+        # addNoise = False
+        # LossClass = nn.CrossEntropyLoss
+        # runName = f"{LossClass()._get_name()}  isNoisy_{addNoise}"
+        # train_ds()
         #
-        dataset = Cifar10_train(addNoise)
-        dataloader = DataLoader(dataset, batchsize, shuffle=True, num_workers=2)
-        model = resnetDs().to(device, dtype=torch.float32)
-        #
-        optimizer = optim.SGD(model.parameters(), weight_decay=1e-4, lr=lr, momentum=0.9)
-        scheduler = optim.lr_scheduler.StepLR(optimizer, 40, gamma=0.1)
-        criterion = LossClass()
-        for epoch in range(numEpoch):
-            for i, (x, y) in enumerate(dataloader):
-                x = x.to(device)
-                # x = resize(x, [64, 64], interpolation=InterpolationMode.BILINEAR, antialias=True)
-                y = y.to(device)
-                #
-                pred2, pred3, pred4, pred5, predFinal = model(x)
-                loss = criterion(pred2, y) + criterion(pred3, y) + criterion(pred4, y) + criterion(pred5, y) + criterion(predFinal, y)
-                #
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-                if i % 100 == 0:
-                    print(f"epoch:{epoch}\t batch:{i} \tloss:{loss}")
-            scheduler.step()
-            infos = eval(model)
-            for j in range(10):
-                accuracy[epoch, j] = infos[j].accuracy
-                if epoch % 5 == 0:
-                    print(f"epoch:{epoch}\tclass{j}\taccuracy:{infos[j].accuracy}")
-        torch.save(model, runName + ".pt")
-        torch.save(accuracy, runName + "_result.pt")
-        plotAcc(accuracy, save=True)
+        addNoise = True
+        for LossClass in [ SL, LSRLoss]:
+            runName = f"{LossClass()._get_name()}  isNoisy_{addNoise}"
+            train_ds()

@@ -26,17 +26,17 @@ class SL(nn.Module):
         return self.alpha * self.CE(x, y) + self.beta * self.RCE(x, y)
 
 
-class LabelSmoothingLoss(nn.Module):
+class LSRLoss(nn.Module):
     """
     With label smoothing,
     KL-divergence between q_{smoothed ground truth prob.}(w)
     and p_{prob. computed by model}(w) is minimized.
     """
 
-    def __init__(self, alpha, numClass):
+    def __init__(self, alpha=0.1, numClass=10):
         assert 0.0 < alpha <= 1.0
 
-        super(LabelSmoothingLoss, self).__init__()
+        super(LSRLoss, self).__init__()
 
         smoothing_value = alpha / numClass
         one_hot = torch.full((numClass,), smoothing_value)
@@ -50,7 +50,7 @@ class LabelSmoothingLoss(nn.Module):
         output (FloatTensor): batch_size x n_classes
         target (LongTensor): batch_size
         """
-        model_prob = self.one_hot.repeat(target.size(0), 1)  # 扩展为矩阵,值全为alpha/K
-        model_prob.scatter_(1, target.unsqueeze(1), self.confidence)  # 正确标签处设为1-alpha
-
-        return F.kl_div(output, model_prob, reduction='sum')
+        output = F.log_softmax(output, dim=1)
+        smoothedLabel = self.one_hot.repeat(target.size(0), 1).to(output.device)  # 扩展为矩阵,值全为alpha/K
+        smoothedLabel = smoothedLabel.scatter_(1, target.unsqueeze(1), self.confidence)  # 正确标签处设为1-alpha
+        return torch.mean(torch.sum(-output * smoothedLabel, dim=1))
