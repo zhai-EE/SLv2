@@ -214,18 +214,18 @@ class ResNet(nn.Module):
         x = self.relu(x)
         x = self.maxpool(x)
         x = self.layer1(x)
-        con2x = x
+        # con2x = x
         x = self.layer2(x)
-        con3x = x
+        # con3x = x
         x = self.layer3(x)
-        con4x = x
+        # con4x = x
         x = self.layer4(x)
-        con5x = x
+        # con5x = x
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
         x = self.fc(x)
 
-        return con2x, con3x, con4x, con5x, x
+        return x
 
 
 def resnet50() -> ResNet:
@@ -246,7 +246,6 @@ class resnetDs(nn.Module):
         self.l3 = nn.Sequential(nn.Flatten(), nn.Linear(4 * 4 * 512, 10))
         self.l4 = nn.Sequential(nn.Flatten(), nn.Linear(2 * 2 * 1024, 10))
         self.l5 = nn.Sequential(nn.Flatten(), nn.Linear(1 * 1 * 2048, 10))
-
 
     def forward(self, x):
         f2, f3, f4, f5, fFinal = self.mainNet(x)

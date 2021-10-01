@@ -6,7 +6,7 @@ import torch
 from Eval import eval, eval_ds
 import matplotlib.pyplot as plt
 from MyLoss import SL, LSRLoss
-from MyResNet import resnetDs
+from MyResNet import resnetDs, resnet50
 from torchvision.transforms.functional import resize
 from torchvision.transforms.functional import InterpolationMode
 
@@ -98,21 +98,60 @@ def train_ds():
     plotAccDs(accuracy, save=True)
 
 
+def train():
+    batchsize = 256
+    lr = 0.01
+    numEpoch = 120
+    accuracy = torch.zeros(numEpoch, 10, dtype=torch.float32)
+    #
+    device = torch.device('cuda')
+    #
+    dataset = Cifar10_train(addNoise)
+    dataloader = DataLoader(dataset, batchsize, shuffle=True, num_workers=2)
+    model = resnet50().to(device, dtype=torch.float32)
+    #
+    optimizer = optim.SGD(model.parameters(), weight_decay=1e-4, lr=lr, momentum=0.9)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, 40, gamma=0.1)
+    criterion = LossClass()
+    for epoch in range(numEpoch):
+        for i, (x, y) in enumerate(dataloader):
+            x = x.to(device)
+            y = y.to(device)
+            #
+            pred = model(x)
+            loss = criterion(pred, y)
+            #
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            if i % 100 == 0:
+                print(f"epoch:{epoch}\t batch:{i} \tloss:{loss}")
+        scheduler.step()
+        infos = eval(model)
+        #
+        for j in range(10):
+            accuracy[epoch, j] = infos[j].accuracy
+            if epoch % 5 == 0:
+                print(f"epoch:{epoch}\tclass:{j}\taccuracy:{infos[j].accuracy}")
+    torch.save(model, runName + ".pt")
+    torch.save(accuracy, runName + "_result.pt")
+    plotAcc(accuracy, save=True, name=runName)
+
+
 if __name__ == '__main__':
     #
-    if (True):
-        LossClass = LSRLoss
-        addNoise = True
+    if (False):
+        LossClass = nn.CrossEntropyLoss
+        addNoise = False
         runName = f"{LossClass()._get_name()}  isNoisy_{addNoise}"
-        showResDs("LSR - noisy", save=True)
+        showRes("CE - clean", save=True)
     else:
         #
-        # addNoise = False
-        # LossClass = nn.CrossEntropyLoss
-        # runName = f"{LossClass()._get_name()}  isNoisy_{addNoise}"
-        # train_ds()
-        #
+        addNoise = False
+        LossClass = nn.CrossEntropyLoss
+        runName = f"{LossClass()._get_name()}  isNoisy_{addNoise}"
+        train()
         addNoise = True
-        for LossClass in [ SL, LSRLoss]:
+        for LossClass in [nn.CrossEntropyLoss, SL, LSRLoss]:
             runName = f"{LossClass()._get_name()}  isNoisy_{addNoise}"
-            train_ds()
+            train()
