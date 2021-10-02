@@ -15,9 +15,9 @@ addNoise = None
 runName = None
 
 
-def showRes(name):
-    acc = torch.load(name + "_result.pt")
-    plotAcc(acc)
+def showRes(name, save=False):
+    acc = torch.load(runName + "_result.pt")
+    plotAcc(acc, save=save, name=name)
 
 
 def showResDs(name, save=False):
@@ -42,9 +42,9 @@ def plotAcc(acc, save=False, name=runName):
     ax.set_xlabel("epoch")
     ax.set_ylabel("class wise accuracy")
     ax.set_title(name)
-    ax.legend(ncol=2, loc='lower right')
+    #ax.legend(ncol=2, loc='upper right')
     ax.grid()
-    plt.ylim((0.5, 1))
+    plt.ylim((0.8, 1))
     if save:
         plt.savefig(name + ".png")
     plt.show()
@@ -140,11 +140,11 @@ def train():
 
 if __name__ == '__main__':
     #
-    if (False):
+    if (True):
         LossClass = nn.CrossEntropyLoss
-        addNoise = False
+        addNoise = True
         runName = f"{LossClass()._get_name()}  isNoisy_{addNoise}"
-        showRes("CE - clean", save=True)
+        showRes("CE - noisy", save=True)
     else:
         #
         addNoise = False
