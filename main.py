@@ -139,7 +139,7 @@ def train():
 
 
 if __name__ == '__main__':
-    #
+    # 训练或读取结果
     if (True):
         LossClass = nn.CrossEntropyLoss
         addNoise = True

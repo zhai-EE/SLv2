@@ -10,8 +10,8 @@ class RCE(nn.Module):
 
     def forward(self, x, y):
         x = F.softmax(x, dim=1)
-        py = x[:, y]  # 在正确标签上的概率值
-        return torch.mean(-self.A * (1 - py))
+        py = x[:, y]  # 取出在正确标签上的概率值
+        return torch.mean(-self.A * (1 - py))  # 这里使用的是化简后的RCE表达式，原文有证
 
 
 class SL(nn.Module):
@@ -50,7 +50,7 @@ class LSRLoss(nn.Module):
         output (FloatTensor): batch_size x n_classes
         target (LongTensor): batch_size
         """
-        output = F.log_softmax(output, dim=1)
+        output = F.log_softmax(output, dim=1)  # log(softmax(x))
         smoothedLabel = self.one_hot.repeat(target.size(0), 1).to(output.device)  # 扩展为矩阵,值全为alpha/K
         smoothedLabel = smoothedLabel.scatter_(1, target.unsqueeze(1), self.confidence)  # 正确标签处设为1-alpha
-        return torch.mean(torch.sum(-output * smoothedLabel, dim=1))
+        return torch.mean(torch.sum(-output * smoothedLabel, dim=1))  # 跟log(softmax(x))配合起来就是交叉熵
