@@ -12,7 +12,7 @@ from torchvision.transforms.functional import InterpolationMode
 
 LossClass = None  # 使用哪个loss函数
 addNoise = None
-runName = None  # 根据loss函数和是否加噪声生成一个字符串标识数据
+runName = None  # 根据loss函数和是否加噪声生成一个字符串标识结果
 
 
 def showRes(name, save=False):
@@ -139,7 +139,7 @@ def train():
 
 
 if __name__ == '__main__':
-    #
+    # 训练或读取结果
     if (True):
         LossClass = nn.CrossEntropyLoss
         addNoise = True

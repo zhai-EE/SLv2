@@ -16,6 +16,7 @@ class Info:
 
 
 def eval(model):
+    # 计算准确度
     with torch.no_grad():
         infos = []
         for i in range(10):
@@ -51,6 +52,7 @@ def eval(model):
 
 
 def eval_ds(model):
+    # 对deeply supervised的情况计算准确度
     with torch.no_grad():
         # 初始化info矩阵5行10列，行下标表示resnet各层的输出
         infos = []
