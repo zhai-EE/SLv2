@@ -10,9 +10,9 @@ from MyResNet import resnetDs, resnet50
 from torchvision.transforms.functional import resize
 from torchvision.transforms.functional import InterpolationMode
 
-LossClass = None
+LossClass = None  # 使用哪个loss函数
 addNoise = None
-runName = None
+runName = None  # 根据loss函数和是否加噪声生成一个字符串标识数据
 
 
 def showRes(name, save=False):
@@ -42,7 +42,7 @@ def plotAcc(acc, save=False, name=runName):
     ax.set_xlabel("epoch")
     ax.set_ylabel("class wise accuracy")
     ax.set_title(name)
-    #ax.legend(ncol=2, loc='upper right')
+    # ax.legend(ncol=2, loc='upper right')
     ax.grid()
     plt.ylim((0.8, 1))
     if save:

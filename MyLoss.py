@@ -10,7 +10,7 @@ class RCE(nn.Module):
 
     def forward(self, x, y):
         x = F.softmax(x, dim=1)
-        py = x[:, y]
+        py = x[:, y]  # 在正确标签上的概率值
         return torch.mean(-self.A * (1 - py))
 
 

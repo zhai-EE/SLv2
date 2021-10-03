@@ -27,7 +27,7 @@ def readMetaData():
     return dataDict
 
 
-def fechDataFromFile():
+def fetchDataFromFile():
     datas = []
     labels = []
     for i in range(1, 6):
@@ -58,7 +58,7 @@ def addSymmetricNoise(labels, noiseRate):
 
 class Cifar10_train(Dataset):
     def __init__(self, addNoise):
-        self.x, self.y = fechDataFromFile()
+        self.x, self.y = fetchDataFromFile()
         self.metadata = readMetaData()
         # 40%标签随机翻转
         if addNoise:
